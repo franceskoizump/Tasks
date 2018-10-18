@@ -19,22 +19,19 @@ __kernel void matrix_multiplication(__global float * as,
     for (int tileK = 0; tileK * 16  < k; tileK+=1)
     {
 
-        if (j < m && tileK + local_i < k) tileA[local_i][local_j] = as[j * k + local_i + tileK * 16];   
-        else tileA[local_i][local_j] = 0.f;
-
-        if (i < n && tileK + local_j < k) tileA[local_i][local_j] = bs[(local_j + tileK * 16) * k + i];   
-        else tileA[local_i][local_j] = 0.f;
+        tileA[local_j][local_i] = as[j * k + local_i + tileK * 16];   
+        tileB[local_j][local_i] = bs[(local_j + tileK * 16) * k + i];   
         
         barrier(CLK_LOCAL_MEM_FENCE);
         for (int l = 0; l < tile; ++l) 
-            sum += tileA[l][local_j] * tileB[local_i][l];
+            sum += tileA[local_j][l] * tileB[l][local_i];
         barrier(CLK_LOCAL_MEM_FENCE);
 
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
     if (i < m && j < n) {
-        cs[n*i + j] = sum;
+        cs[n*j + i] = sum;
 }
 
 }
